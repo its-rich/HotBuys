@@ -1,4 +1,5 @@
 import requests
+import json
 import textdistance
 from bs4 import BeautifulSoup
 
@@ -245,7 +246,153 @@ def checkKmart(query):
             maxSimilarity = updateSimilarity
             product = createProductJSON("Kmart", productName, productCreator, price, link)
 
-        kmartProducts[productName] = (price, link)
+        # kmartProducts[link] = (productName, price)
+
+    browser.quit()
+    payload.append(product)
+
+
+
+def checkPetBarn(query):
+    petbarnProducts = {}
+
+    pageNum = 1
+    url = f"https://www.petbarn.com.au/search?p={pageNum}&q={query['name']}"
+    product = createProductJSON("Petbarn", "", "", "", url)
+
+    maxSimilarity = 0
+    pageExists = True
+
+    while pageExists:
+        pageExists = False
+        url = f"https://www.petbarn.com.au/search?p={pageNum}&q={query['name']}"
+        request = requests.get(url, headers=headers)
+        soup = BeautifulSoup(request.content, "html.parser")
+
+        for tag in soup.findAll("li", {"class": "item last col-lg-3 col-md-3 col-xs-6"}):
+            pageExists = True
+
+            # first word in the title?
+            productCreator = ""
+            productName = tag.find("h2", {"class": "product-name"}).text.strip()
+            price = tag.find("span", {"class": "regular-price"}).text.strip()
+            link = tag.find("h2", {"class": "product-name"}).find("a")["href"].strip()
+
+            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            if updateSimilarity:
+                maxSimilarity = updateSimilarity
+                product = createProductJSON("Petbarn", productName, productCreator, price, link)
+
+            # petbarnProducts[link] = (productName, price)
+
+        pageNum += 1
+
+    payload.append(product)
+
+
+query = {'name': 'kangaroo and pumpkin roll 2kg', "creator": "prime100"}
+
+
+
+def checkMyPetWarehouse(query):
+    myPetWareHouseProducts = {}
+
+    pageNum = 1
+    url = f"https://results.mypetwarehouse.com.au/api/search?cid=109928273aef45ce8f9a7b655e10f7a1&q={query['name']}&page={pageNum}&ps=32&ss=&so="
+    product = createProductJSON("My Pet Warehouse", "", "", "", f"https://www.mypetwarehouse.com.au/store/search.asp?q={query['name']}&ps=24&ss=&so=")
+    maxSimilarity = 0
+    pageExists = True
+
+    while pageExists:
+        pageExists = False
+        url = f"https://results.mypetwarehouse.com.au/api/search?cid=109928273aef45ce8f9a7b655e10f7a1&q={query['name']}&page={pageNum}&ps=32&ss=&so="
+        request = requests.get(url, headers=headers)
+        soup = BeautifulSoup(request.content, "html.parser")
+
+        productJSON = json.loads(soup.text)
+
+        for item in productJSON["p"]:
+            pageExists = True
+            productName = item["name"].strip()
+            productCreator = item["brand"].strip()
+            price = str(item["price"]).strip()
+            link = item["url"].strip()
+
+            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            if updateSimilarity:
+                maxSimilarity = updateSimilarity
+                product = createProductJSON("My Pet Warehouse", productName, productCreator, price, link)
+
+            # myPetWareHouseProducts[link] = (productName, productCreator, price)
+
+        pageNum += 1
+
+    payload.append(product)
+
+
+
+def checkPETStock(query):
+    petStockProducts = {}
+
+    pageNum = 1
+    url = f"https://www.petstock.com.au/pet/search/{query['name']}/page/{pageNum}"
+    product = createProductJSON("PETstock", "", "", "", url)
+    maxSimilarity = 0
+    pageExists = True
+
+    while pageExists:
+        pageExists = False
+        url = f"https://www.petstock.com.au/pet/search/{query['name']}/page/{pageNum}"
+        request = requests.get(url, headers=headers)
+        soup = BeautifulSoup(request.content, "html.parser")
+
+        for tag in soup.findAll("div", {"class": "product"}):
+            pageExists = True
+            productCreator = ""
+            productName = tag.find("a", {"class": "desc"}).text.strip()
+            price = "$" + tag.find("meta", {"itemprop": "price"})["content"].strip()
+            link = "https://www.petstock.com.au" + tag.find("a", {"class": "desc"})["href"].strip()
+
+            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            if updateSimilarity:
+                maxSimilarity = updateSimilarity
+                product = createProductJSON("PETstock", productName, productCreator, price, link)
+
+            # petStockProducts[link] = (productName, price)
+
+        pageNum += 1
+
+    payload.append(product)
+
+
+
+def checkHabitatPets(query):
+    habitatPetsProducts = {}
+
+    url = f"https://www.habitatpets.com.au/pages/search-results-page?q={query['name']}+rolls&page=16"
+    product = createProductJSON("Habitat Pets", "", "", "", url)
+    maxSimilarity = 0
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--incognito")
+
+    browser.get(url)
+    soup = BeautifulSoup(browser.page_source, "html.parser")
+
+    for tag in soup.findAll("li", {"class": "snize-product"}):
+        productCreator = ""
+        productName = tag.find("span", {"class": "snize-title"}).text.strip()
+        link = tag.find("a")["href"].strip()
+        price = None
+
+        if tag.find("span", {"class": "snize-price money"}) is None:
+            price = tag.find("span", {"class": "snize-price snize-price-with-discount money"}).text.strip()
+        else:
+            price = tag.find("span", {"class": "snize-price money"}).text.strip()
+
+        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        if updateSimilarity:
+            maxSimilarity = updateSimilarity
+            product = createProductJSON("PETstock", productName, productCreator, price, link)
 
     browser.quit()
     payload.append(product)
@@ -298,24 +445,6 @@ def initiateScrape(event, context):
 
 
 req = {
-  "requestContext": {
-    "accountId": "054965617272",
-    "apiId": "1et7wupi86",
-    "domainName": "1et7wupi86.execute-api.ap-southeast-2.amazonaws.com",
-    "domainPrefix": "1et7wupi86",
-    "http": {
-      "method": "POST",
-      "path": "/default/checkStores",
-      "protocol": "HTTP/1.1",
-      "sourceIp": "49.194.204.110",
-      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
-    },
-    "requestId": "ZFGLajuySwMEPZA=",
-    "routeKey": "ANY /checkStores",
-    "stage": "default",
-    "time": "13/Jan/2021:09:02:13 +0000",
-    "timeEpoch": 1610528533734
-  },
   "body": {
       "stores": ["David Jones", "Big W", "Target", "Dymocks", "Myer"],
       "query": {
@@ -325,4 +454,4 @@ req = {
   }
 }
 
-print(initiateScrape(req, None))
+# print(initiateScrape(req, None))
