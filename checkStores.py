@@ -8,28 +8,28 @@ payload = []
 # In future check a file from S3
 validStores = ["Kmart", "David Jones", "Big W", "Target", "Dymocks", "Myer"]
 
-########filter out productCreator name in productName
+########filter out productBrand name in productName
 
 
 
-def checkSimilarity(productName, productCreator, query, maxSimilarity):
+def checkSimilarity(productName, productBrand, query, maxSimilarity):
     similarity = textdistance.levenshtein.normalized_similarity(productName.lower(), query["name"])
 
     if similarity < 0.5:
         return False
-    elif query["creator"] != "":
-        similarity += textdistance.levenshtein.normalized_similarity(productName.lower(), query["creator"])
+    elif query["brand"] != "":
+        similarity += textdistance.levenshtein.normalized_similarity(productName.lower(), query["brand"])
 
     if maxSimilarity <= similarity:
         return similarity
     else:
         return False
 
-def createProductJSON(store, productName, productCreator, price, link):
+def createProductJSON(store, productName, productBrand, price, link):
     json = {
         "store": store,
         "name": productName,
-        "creator": productCreator,
+        "brand": productBrand,
         "price": price,
         "link": link
     }
@@ -48,7 +48,7 @@ def checkDavidJones(query):
     maxSimilarity = 0
 
     request = requests.get(url, headers=headers)
-    soup = BeautifulSoup(request.content, "html.parser")
+    soup = BeautifulSoup(request.content, "lxml")
 
     stylesLink = "https://search.www.davidjones.com/htmlapi/?"
 
@@ -59,21 +59,21 @@ def checkDavidJones(query):
         stylesLink += "&SKU=" + styleNumber.text.strip().split(" ")[2].strip()
 
     request = requests.get(stylesLink, headers=headers)
-    soup = BeautifulSoup(request.text, "html.parser")
+    soup = BeautifulSoup(request.text, "lxml")
 
     for tag in soup.findAll("div", {"class": '\\"item-detail\\"'}):
-        productCreator = tag.find("div", {"class": '\\"item-brand\\"'}).text.strip()
+        productBrand = tag.find("div", {"class": '\\"item-brand\\"'}).text.strip()
         productName = tag.find("a").text.strip()
         price = tag.find("span", {"itemprop": '\\"price\\"'}).text.strip()
         link = tag.find("a")["href"].replace("\\", "")
         link = link.replace("\"", "").strip()
 
-        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("Target", productName, productCreator, price, link)
+            product = createProductJSON("Target", productName, productBrand, price, link)
 
-        # davidJonesProducts[link] = (productName, productCreator, price)
+        # davidJonesProducts[link] = (productName, productBrand, price)
 
     payload.append(product)
 
@@ -85,9 +85,9 @@ def checkBigW(query):
     maxSimilarity = 0
 
     request = requests.get(url, headers=headers)
-    soup = BeautifulSoup(request.content, "html.parser")
+    soup = BeautifulSoup(request.content, "lxml")
 
-    # It doesn't display productCreators so this assumes every product relates to the productCreator
+    # It doesn't display productBrands so this assumes every product relates to the productBrand
     # thus only 1 dict is necessary
     for tag in soup.findAll("div", {"class": "productDescription"}):
         productName = tag.find("a").text.strip()
@@ -120,28 +120,28 @@ def checkTarget(query):
     maxSimilarity = 0
 
     request = requests.get(url, headers=headers)
-    soup = BeautifulSoup(request.content, "html.parser")
+    soup = BeautifulSoup(request.content, "lxml")
 
     for tag in soup.findAll("div", {"class": "detail"}):
         link = "https://www.target.com.au" + tag.find("a")["href"].strip()
         productName = ""
-        productCreator = ""
+        productBrand = ""
 
         if "-" in tag.find("a")["title"].strip():
             metadata = tag.find("a")["title"].strip().split("-")
-            productCreator = metadata.pop().strip()
+            productBrand = metadata.pop().strip()
             productName = "-".join(metadata).strip()
         else:
             ## TODO:
             print(tag.find("a")["title"].strip())
         price = tag.find("span", {"class": "price-regular price"}).text.strip()
 
-        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("Target", productName, productCreator, price, link)
+            product = createProductJSON("Target", productName, productBrand, price, link)
 
-       # targetProducts[link] = (productName, productCreator, price)
+       # targetProducts[link] = (productName, productBrand, price)
 
     payload.append(product)
 
@@ -157,23 +157,23 @@ def checkDymocks(query):
     while (maxSimilarity > 0.8):
         maxSimilarity = 0
         request = requests.get(f"https://www.dymocks.com.au/books/page-{pageNum}/?term={query['name']}&npp=96", headers=headers)
-        soup = BeautifulSoup(request.content, "html.parser")
+        soup = BeautifulSoup(request.content, "lxml")
 
         for tag in soup.findAll("div", {"class": "product-tile"}):
-            productCreator = tag.find("div", {"class": "product-tile-desc product-tile-author"})["title"].strip()
+            productBrand = tag.find("div", {"class": "product-tile-desc product-tile-author"})["title"].strip()
             productName = tag.find("a", {"class": "product-tile-title product-title"})["title"].strip()
             link = "https://www.dymocks.com.au" + tag.find("a", {"class": "product-tile-title product-title"})["href"].strip()
             price = tag.find("div", {"class": "product-tile-price"}).text.strip()
 
-            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
                 if product["price"] == "":
-                    product = createProductJSON("Dymocks", productName, productCreator, price, link)
+                    product = createProductJSON("Dymocks", productName, productBrand, price, link)
                 elif product["price"] > price:
-                    product = createProductJSON("Dymocks", productName, productCreator, price, link)
+                    product = createProductJSON("Dymocks", productName, productBrand, price, link)
 
-            # dymocksProducts[link] = (productName, productCreator, price)
+            # dymocksProducts[link] = (productName, productBrand, price)
 
         pageNum += 1
 
@@ -188,10 +188,10 @@ def checkMyer(query):
     maxSimilarity = 0
 
     request = requests.get(url, headers=headers)
-    soup = BeautifulSoup(request.content, "html.parser")
+    soup = BeautifulSoup(request.content, "lxml")
 
     for tag in soup.findAll("div", {"class": "css-m4cs32"}):
-        productCreator = tag.find("span", {"data-automation": "product-brand"}).text.strip()
+        productBrand = tag.find("span", {"data-automation": "product-brand"}).text.strip()
         productName = tag.find("span", {"data-automation": "product-name"}).text.strip()
         link = "https://www.myer.com.au" + tag.find("a")["href"].strip()
 
@@ -200,12 +200,12 @@ def checkMyer(query):
         else:
             price = tag.find("p", {"data-automation": "product-price-was"}).findAll("span")[1].text.strip()
 
-        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("Myer", productName, productCreator, price, link)
+            product = createProductJSON("Myer", productName, productBrand, price, link)
 
-        # myerProducts[link] = (productName, productCreator, price)
+        # myerProducts[link] = (productName, productBrand, price)
 
     payload.append(product)
 
@@ -228,7 +228,7 @@ def checkKmart(query):
     soup = BeautifulSoup(browser.page_source, "lxml")
 
     for tag in soup.findAll("div", {"class": "product-details"}):
-        productCreator = ""
+        productBrand = ""
         productName = tag.find("p", {"class": "title"}).text.strip()
         price = tag.find("span", {"class": "price"}).text.strip()
         link = "https://www.kmart.com.au" + tag.find_parent("div").find("a")["href"].strip()
@@ -238,13 +238,13 @@ def checkKmart(query):
 
         if "by" in productName:
             metadata = productName.split(" by ")
-            productCreator = metadata.pop().strip()
+            productBrand = metadata.pop().strip()
             productName = " by ".join(metadata).strip()
 
-        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("Kmart", productName, productCreator, price, link)
+            product = createProductJSON("Kmart", productName, productBrand, price, link)
 
         # kmartProducts[link] = (productName, price)
 
@@ -267,21 +267,21 @@ def checkPetBarn(query):
         pageExists = False
         url = f"https://www.petbarn.com.au/search?p={pageNum}&q={query['name']}"
         request = requests.get(url, headers=headers)
-        soup = BeautifulSoup(request.content, "html.parser")
+        soup = BeautifulSoup(request.content, "lxml")
 
         for tag in soup.findAll("li", {"class": "item last col-lg-3 col-md-3 col-xs-6"}):
             pageExists = True
 
             # first word in the title?
-            productCreator = ""
+            productBrand = ""
             productName = tag.find("h2", {"class": "product-name"}).text.strip()
             price = tag.find("span", {"class": "regular-price"}).text.strip()
             link = tag.find("h2", {"class": "product-name"}).find("a")["href"].strip()
 
-            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
-                product = createProductJSON("Petbarn", productName, productCreator, price, link)
+                product = createProductJSON("Petbarn", productName, productBrand, price, link)
 
             # petbarnProducts[link] = (productName, price)
 
@@ -290,7 +290,7 @@ def checkPetBarn(query):
     payload.append(product)
 
 
-query = {'name': 'kangaroo and pumpkin roll 2kg', "creator": "prime100"}
+query = {'name': 'kangaroo and pumpkin roll 2kg', "brand": "prime100"}
 
 
 
@@ -307,23 +307,23 @@ def checkMyPetWarehouse(query):
         pageExists = False
         url = f"https://results.mypetwarehouse.com.au/api/search?cid=109928273aef45ce8f9a7b655e10f7a1&q={query['name']}&page={pageNum}&ps=32&ss=&so="
         request = requests.get(url, headers=headers)
-        soup = BeautifulSoup(request.content, "html.parser")
+        soup = BeautifulSoup(request.content, "lxml")
 
         productJSON = json.loads(soup.text)
 
         for item in productJSON["p"]:
             pageExists = True
             productName = item["name"].strip()
-            productCreator = item["brand"].strip()
+            productBrand = item["brand"].strip()
             price = str(item["price"]).strip()
             link = item["url"].strip()
 
-            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
-                product = createProductJSON("My Pet Warehouse", productName, productCreator, price, link)
+                product = createProductJSON("My Pet Warehouse", productName, productBrand, price, link)
 
-            # myPetWareHouseProducts[link] = (productName, productCreator, price)
+            # myPetWareHouseProducts[link] = (productName, productBrand, price)
 
         pageNum += 1
 
@@ -331,7 +331,7 @@ def checkMyPetWarehouse(query):
 
 
 
-def checkPETStock(query):
+def checkPETstock(query):
     petStockProducts = {}
 
     pageNum = 1
@@ -344,19 +344,19 @@ def checkPETStock(query):
         pageExists = False
         url = f"https://www.petstock.com.au/pet/search/{query['name']}/page/{pageNum}"
         request = requests.get(url, headers=headers)
-        soup = BeautifulSoup(request.content, "html.parser")
+        soup = BeautifulSoup(request.content, "lxml")
 
         for tag in soup.findAll("div", {"class": "product"}):
             pageExists = True
-            productCreator = ""
+            productBrand = ""
             productName = tag.find("a", {"class": "desc"}).text.strip()
             price = "$" + tag.find("meta", {"itemprop": "price"})["content"].strip()
             link = "https://www.petstock.com.au" + tag.find("a", {"class": "desc"})["href"].strip()
 
-            updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+            updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
-                product = createProductJSON("PETstock", productName, productCreator, price, link)
+                product = createProductJSON("PETstock", productName, productBrand, price, link)
 
             # petStockProducts[link] = (productName, price)
 
@@ -376,10 +376,10 @@ def checkHabitatPets(query):
     chrome_options.add_argument("--incognito")
 
     browser.get(url)
-    soup = BeautifulSoup(browser.page_source, "html.parser")
+    soup = BeautifulSoup(browser.page_source, "lxml")
 
     for tag in soup.findAll("li", {"class": "snize-product"}):
-        productCreator = ""
+        productBrand = ""
         productName = tag.find("span", {"class": "snize-title"}).text.strip()
         link = tag.find("a")["href"].strip()
         price = None
@@ -389,10 +389,10 @@ def checkHabitatPets(query):
         else:
             price = tag.find("span", {"class": "snize-price money"}).text.strip()
 
-        updateSimilarity = checkSimilarity(productName, productCreator, query, maxSimilarity)
+        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("PETstock", productName, productCreator, price, link)
+            product = createProductJSON("Habitat Pets", productName, productBrand, price, link)
 
     browser.quit()
     payload.append(product)
@@ -401,19 +401,22 @@ def checkHabitatPets(query):
 #
 def checkStore(store, query):
 
-    if store == "Kmart":
-        checkKmart(query)
-    elif store == "David Jones":
+    if store == "David Jones":
         checkDavidJones(query)
     elif store == "Big W":
         checkBigW(query)
-    elif store == "Target":
-        checkTarget(query)
     elif store == "Dymocks":
         checkDymocks(query)
     elif store == "Myer":
         checkMyer(query)
-
+    elif store == "Petbarn":
+        checkPetBarn(query)
+    elif store == "My Pet Warehouse":
+        checkMyPetWarehouse(query)
+    elif store == "PETstock":
+        checkPETstock(query)
+    elif store == "Habitat Pets":
+        checkHabitatPets(query)
 
 
 def initiateScrape(event, context):
@@ -442,16 +445,3 @@ def initiateScrape(event, context):
         "statusCode": 200,
         "body": payload
     }
-
-
-req = {
-  "body": {
-      "stores": ["David Jones", "Big W", "Target", "Dymocks", "Myer"],
-      "query": {
-          "name": "7 ways",
-          "creator": "jamie oliver"
-      }
-  }
-}
-
-# print(initiateScrape(req, None))
