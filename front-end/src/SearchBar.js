@@ -1,11 +1,20 @@
 import "./styles/styles.css";
+import { useState } from "react";
 
-export default function SearchBar() {
+export default function SearchBar(props) {
 
-    const queryAPI = () => {
+    const [productName, setProductName] = useState("");
+    const [productBrand, setProductBrand] = useState("");
 
+    const initiateSearch = () => {
+        const query = {
+            "name": productName,
+            "brand": productBrand
+        }
+
+        props.setSearchQueries(query);
+        props.queryAPI();
     };
-
 
     return (
         <div className="container">
@@ -13,6 +22,8 @@ export default function SearchBar() {
                 <input
                     type="text"
                     placeholder="Search..."
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
                 />
 
                 <i
@@ -21,13 +32,15 @@ export default function SearchBar() {
                         position: "relative",
                         fontSize:"36px",
                         left: "10px",
-                        background: "blue",
+                        // background: "blue",
                         width: "50px",
                         height: "50px", // 40px
-                        borderRadius: "50%",
-                        zIndex: "1"
+                        borderRadius: "15px",
+                        zIndex: "1",
+                        margin: "10px",
+                        top: "5px"
                     }}
-                    onClick={() => queryAPI()}
+                    onClick={() => initiateSearch()}
                 >
                 </i>
 

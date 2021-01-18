@@ -1,3 +1,4 @@
+import json
 import requests
 import textdistance
 from bs4 import BeautifulSoup
@@ -60,32 +61,40 @@ def checkDymocks(query):
 
         pageNum += 1
 
-    return product
+    return json.dumps(product)
 
 def initiateScrape(request):
 
     query = None
 
-    # Only handle POST requests with data
+    # Necessary headers to allow CORS
+    responseHeader = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "3600",
+        "Access-Control-Allow-Credentials": "true",
+        "Content-Type":"text/plain"
+    }
+
+    # Inform API requests/axios on what is allowed
+    if request.method == "OPTIONS":
+        return ("", 204, responseHeader)
+
+    # Ensure only POST requests are allowed
     if request.method != "POST":
-        return {
-            "Status Code": 400
-        }
+        return ("", 400, responseHeader)
 
     request = request.get_json()
 
+    # Verify the payload received is formatted correctly
     try:
-        if len(request["body"]) != 1 or len(request["body"]["query"]) != 2:
-            return {
-                "Status Code": 400
-            }
+        if len(request["query"]) != 2:
+            return ("", 400, responseHeader)
+        request["query"]["name"]
+        request["query"]["brand"]
 
     except:
-        return {
-            "Status Code": 400
-        }
+        return ("", 400, responseHeader)
 
-    return {
-        "Status Code": 200,
-        "body": checkDymocks(request["body"]["query"])
-    }
+    return (checkDymocks(request["query"]), 200, responseHeader)
