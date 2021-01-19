@@ -11,9 +11,7 @@ export default function SearchBar(props) {
             "name": productName,
             "brand": productBrand
         }
-
-        props.setSearchQueries(query);
-        props.queryAPI();
+        props.queryAPI(query);
     };
 
     return (
