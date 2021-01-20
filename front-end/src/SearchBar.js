@@ -7,6 +7,10 @@ export default function SearchBar(props) {
     const [productBrand, setProductBrand] = useState("");
 
     const initiateSearch = () => {
+        if (productName === "") {
+            return;
+        }
+
         const query = {
             "name": productName,
             "brand": productBrand
@@ -17,31 +21,29 @@ export default function SearchBar(props) {
     return (
         <div className="container">
             <div className="searchBar">
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                />
+                <div className="searchInputs">
+                    <h2>Product Name:</h2>
+                    <input
+                        type="text"
+                        placeholder="Search product name..."
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                    />
 
-                <i
-                    className="lni lni-search"
-                    style={{
-                        position: "relative",
-                        fontSize:"36px",
-                        left: "10px",
-                        // background: "blue",
-                        width: "50px",
-                        height: "50px", // 40px
-                        borderRadius: "15px",
-                        zIndex: "1",
-                        margin: "10px",
-                        top: "5px"
-                    }}
+                    <h2>Product Brand:</h2>
+                    <input
+                        type="text"
+                        placeholder="Search product brand..."
+                        value={productBrand}
+                        onChange={(e) => setProductBrand(e.target.value)}
+                    />
+                </div>
+                <button
+                    className="searchButton"
                     onClick={() => initiateSearch()}
                 >
-                </i>
-
+                Search <i className="lni lni-search-alt"></i>
+                </button>
             </div>
         </div>
     );

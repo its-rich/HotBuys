@@ -35,7 +35,7 @@ def checkDymocks(query):
     pageNum = 1
     dymocksProducts = {}
 
-    product = createProductJSON("Dymocks", "", "", "", "")
+    product = createProductJSON("Dymocks", "", "", "", f"https://www.dymocks.com.au/books/?term={query['name']}")
     maxSimilarity = 1
 
     while (maxSimilarity > 0.8):

@@ -29,7 +29,7 @@
 }
 
 body {
-    background-color: #FBEEC1;
+    background-color: #F5F5F5;
 }
 
 @keyframes App-logo-spin {
@@ -54,9 +54,39 @@ input:focus {
     input {
         border-radius: 20px;
         height: 30px;
-        width: 80%;
+        width: 90%;
         font-size: 16px;
         padding-left: 10px;
     }
 
+}
+
+.searchInputs {
+    padding-top: 5px;
+}
+
+.searchButton {
+    margin-top: 20px;
+    font-size: 30px;
+    margin-bottom: 20px;
+    background-color: transparent;
+    border-color: white;
+    color: white;
+    outline: none;
+}
+
+.productGroup {
+    margin-bottom: 10%;
+}
+
+.allProducts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.product {
+    flex: 1 1 150px;
+    margin: 5px;
+    background-color: #5298bb;
 }

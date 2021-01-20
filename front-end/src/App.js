@@ -1,12 +1,13 @@
 import "./styles/styles.css";
 import { useEffect, useState } from "react";
 import SearchBar from "./SearchBar.js";
+import ScrapedProducts from "./ScrapedProducts.js";
 import axios from "axios";
 
 
 function App() {
 
-    const [selectedStores, setSelectedStores] = useState(["DavidJones"]);
+    const [selectedStores, setSelectedStores] = useState(["DavidJones", "BigW"]);
     const [validStores, setValidStores] = useState([]);
     const [scrapedResults, setScrapedResults] = useState([]);
     const [searchQueries, setSearchQueries] = useState([]);
@@ -30,7 +31,7 @@ function App() {
     // selected stores
     const queryAPI = (query) => {
         setIsLoading(true);
-        let newQueries = [...searchQueries, query];
+        let newQueries = [query, ...searchQueries];
         setSearchQueries(newQueries);
 
         const payload = {
@@ -48,18 +49,27 @@ function App() {
         selectedStores.map( async (store) => {
             try {
                 resp = await axios.post(`https://australia-southeast1-hotbuys.cloudfunctions.net/check${store}`, payload, headers);
+                resp = resp.data;
+
             } catch (error) {
                 resp = {
                     "store": store,
                     "price": "An error occurred. Please check the website yourself."
                 }
             } finally {
+                if (resp.price === "") {
+                    resp.price = "Based on your input we couldn't find a match. Please check the website yourself."
+                }
+
                 results.push(resp);
             }
 
+            // ORDER PRODUCTS BY LOWEST PRICE
             if (selectedStores[selectedStores.length - 1] === store) {
-                let temp = [...scrapedResults, results];
-                // scrapedResults.push(results);
+                results.sort((a, b) => {
+                    return (a.price.slice(1) - b.price.slice(1))
+                });
+                let temp = [results, ...scrapedResults];
                 setScrapedResults(temp);
                 setIsLoading(false);
             }
@@ -78,17 +88,11 @@ function App() {
                 Loading
                 </h4>
             }
-            {scrapedResults.map((query) => {
-                return (query.map((product) => {
-                    return (
-                        <h3 key={product.data.link}>
-                        {product.data.store} {product.data.price}
-                        </h3>
-                    )
-                }))
-
+            {scrapedResults.map((product, index) => {
+                return (
+                    <ScrapedProducts key={index} query={searchQueries[index]} products={product} />
+                )
             })}
-
 
         </div>
     );
