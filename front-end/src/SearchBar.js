@@ -38,12 +38,18 @@ export default function SearchBar(props) {
                         onChange={(e) => setProductBrand(e.target.value)}
                     />
                 </div>
-                <button
+
+                {props.isSelectedStores.length === 0 &&
+                    <button className="searchButton" disabled>
+                    Search <i className="lni lni-search-alt"></i>
+                    </button>}
+                {props.isSelectedStores.length !== 0 && <button
                     className="searchButton"
                     onClick={() => initiateSearch()}
                 >
                 Search <i className="lni lni-search-alt"></i>
-                </button>
+                </button>}
+
             </div>
         </div>
     );

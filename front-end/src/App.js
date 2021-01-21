@@ -3,15 +3,17 @@ import { useEffect, useState } from "react";
 import SearchBar from "./SearchBar.js";
 import ScrapedProducts from "./ScrapedProducts.js";
 import axios from "axios";
-
+import { useSelector, useDispatch } from "react-redux";
 
 function App() {
 
-    const [selectedStores, setSelectedStores] = useState(["DavidJones", "BigW"]);
-    const [validStores, setValidStores] = useState([]);
+    const [selectedStores, setSelectedStores] = useState([]);
     const [scrapedResults, setScrapedResults] = useState([]);
     const [searchQueries, setSearchQueries] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const validStores = useSelector((state) => state.stores);
+    const isChecked = useSelector((state) => state.checked);
+    const dispatch = useDispatch();
 
     // If the store name is not in the array then add it
     // If the store name is in the array, then delete it
@@ -19,12 +21,18 @@ function App() {
         let newSelection = [...selectedStores];
 
         if (selectedStores.includes(storeName)) {
-            newSelection.splice(newSelection.indexOf(storeName), 1);
+            newSelection.splice(newSelection.indexOf(storeName), 1)
         } else {
             newSelection.push(storeName);
         }
 
         setSelectedStores(newSelection);
+        dispatch(
+            {
+                type: "UPDATE",
+                store: storeName
+            }
+        );
     };
 
     // Send the user's search query to each of the APIs that correspond to their
@@ -76,13 +84,26 @@ function App() {
         });
     };
 
-    // USE REDUX AND DYNAMICALLY CREATE ALL CHECKBOXES
-
     return (
         <div className="App">
             <h1 style={{color: "#F13C20"}}>HotBuys</h1>
             <h2 style={{fontFamily: "Bradley Hand"}}>The easy way of finding the lowest prices, at your favourite stores</h2>
-            <SearchBar queryAPI={(query) => queryAPI(query)} />
+            <SearchBar queryAPI={(query) => queryAPI(query)} isSelectedStores={selectedStores} />
+
+            {validStores !== undefined && validStores.map((store, index) => {
+                return (
+                    <div key={store} >
+                        <input
+                            type="checkbox"
+                            value={store}
+                            checked={isChecked[index]}
+                            onChange={() => updateSelectedStores(store)}
+                        />
+                        <label>{store}</label>
+                    </div>
+                )
+            })}
+
             {isLoading &&
                 <h4>
                 Loading

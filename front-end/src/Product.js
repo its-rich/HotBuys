@@ -1,13 +1,13 @@
 import "./styles/styles.css";
 
 export default function Product(props) {
+
     const openWebsite = (link) => {
         window.open(link);
     }
 
-    // if $ in price ....
     return (
-        <div className="product">
+        <div className="product" key={props.data.store+props.data.link}>
             <div>
             {props.data.store}
             </div>
