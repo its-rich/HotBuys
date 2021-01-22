@@ -7,7 +7,7 @@ export default function Product(props) {
     }
 
     return (
-        <div className="product" key={props.data.store+props.data.link}>
+        <div className="product">
             <div>
             {props.data.store}
             </div>
@@ -23,7 +23,7 @@ export default function Product(props) {
             {props.data.price.includes("$") &&
                 <button onClick={() => openWebsite(props.data.link)}>Link to product</button>}
 
-            {!props.data.price.includes("$") &&
+            {!props.data.price.includes("$") && !props.data.link !== "" &&
                 <button onClick={() => openWebsite(props.data.link)}>Link to website</button>}
         </div>
     )

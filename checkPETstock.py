@@ -31,6 +31,19 @@ def createProductJSON(store, productName, productBrand, price, link):
     }
     return JSON
 
+def findLowestPrice(currPrice, newPrice):
+
+    if currPrice == "":
+        return newPrice
+
+    currPriceNum = float(currPrice.replace("$", ""))
+    newPriceNum = float(newPrice.replace("$", ""))
+
+    if currPriceNum < newPriceNum:
+        return False
+
+    return newPrice
+
 def checkPETstock(query):
     petStockProducts = {}
 
@@ -56,7 +69,10 @@ def checkPETstock(query):
             updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
-                product = createProductJSON("PETstock", productName, productBrand, price, link)
+                price = findLowestPrice(product["price"], price)
+
+                if price is not False:
+                    product = createProductJSON("PETstock", productName, productBrand, price, link)
 
             # petStockProducts[link] = (productName, price)
 

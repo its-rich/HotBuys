@@ -31,8 +31,22 @@ def createProductJSON(store, productName, productBrand, price, link):
     }
     return JSON
 
+def findLowestPrice(currPrice, newPrice):
+
+    if currPrice == "":
+        return newPrice
+
+    currPriceNum = float(currPrice.replace("$", ""))
+    newPriceNum = float(newPrice.replace("$", ""))
+
+    if currPriceNum < newPriceNum:
+        return False
+
+    return newPrice
+
 def checkBigW(query):
     bigwProducts = {}
+    query["name"] = query["name"].replace("&", "%26")
 
     URL = f"https://www.bigw.com.au/search?pageSize=144&q={query['name']}%3Arelevance#"
     product = createProductJSON("Big W", "", "", "", URL)
@@ -59,9 +73,12 @@ def checkBigW(query):
         updateSimilarity = checkSimilarity(productName, "", query, maxSimilarity)
         if updateSimilarity:
             maxSimilarity = updateSimilarity
-            product = createProductJSON("Big W", productName, "", price, link)
+            price = findLowestPrice(product["price"], price)
+            
+            if price is not False:
+                product = createProductJSON("Big W", productName, "", price, link)
 
-       # bigwProducts[link] = (productName, "", price)
+        # bigwProducts[link] = (productName, "", price)
 
     return json.dumps(product)
 

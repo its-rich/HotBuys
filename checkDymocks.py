@@ -31,6 +31,19 @@ def createProductJSON(store, productName, productBrand, price, link):
     }
     return JSON
 
+def findLowestPrice(currPrice, newPrice):
+
+    if currPrice == "":
+        return newPrice
+
+    currPriceNum = float(currPrice.replace("$", ""))
+    newPriceNum = float(newPrice.replace("$", ""))
+
+    if currPriceNum < newPriceNum:
+        return False
+
+    return newPrice
+
 def checkDymocks(query):
     pageNum = 1
     dymocksProducts = {}
@@ -52,9 +65,9 @@ def checkDymocks(query):
             updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
             if updateSimilarity:
                 maxSimilarity = updateSimilarity
-                if product["price"] == "":
-                    product = createProductJSON("Dymocks", productName, productBrand, price, link)
-                elif product["price"] > price:
+                price = findLowestPrice(product["price"], price)
+
+                if price is not False:
                     product = createProductJSON("Dymocks", productName, productBrand, price, link)
 
             # dymocksProducts[link] = (productName, productBrand, price)
