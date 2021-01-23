@@ -11,9 +11,14 @@ function App() {
     const [scrapedResults, setScrapedResults] = useState([]);
     const [searchQueries, setSearchQueries] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [nQueries, setNQueries] = useState([]);
+    const [cheapestStores, setCheapestStores] = useState([]);
+
     const validStores = useSelector((state) => state.stores);
     const isChecked = useSelector((state) => state.checked);
     const dispatch = useDispatch();
+
+    const numSelectedStores = (arr) => arr.reduce((a, v) => (v ? a + 1 : a), 0);
 
     // If the store name is not in the array then add it
     // If the store name is in the array, then delete it
@@ -72,8 +77,9 @@ function App() {
                 results.push(resp);
             }
 
-            // ORDER PRODUCTS BY LOWEST PRICE
-            if (selectedStores[selectedStores.length - 1] === store) {
+            // Only when axios has fully returned the scraped results from each store
+            // should the scraped results be updated
+            if (results.length === numSelectedStores(isChecked)) {
                 results.sort((a, b) => {
                     return (a.price.slice(1) - b.price.slice(1))
                 });
@@ -82,6 +88,22 @@ function App() {
                 setIsLoading(false);
             }
         });
+    };
+
+    const comparePrices = (currMin, price) => {
+
+        if (currMin === -1) {
+            return price;
+        }
+
+        const currMinFloat = Math.parseFloat(currMin.replace("$", ""));
+        const priceFloat = Math.parseFloat(price.replace("$", ""));
+
+        if (price < currMin) {
+            return price;
+        }
+
+        return currMin;
     };
 
     return (

@@ -2,6 +2,8 @@ import "./styles/styles.css";
 
 export default function Product(props) {
 
+    console.log(props.fire);
+
     const openWebsite = (link) => {
         window.open(link);
     }
@@ -9,7 +11,10 @@ export default function Product(props) {
     return (
         <div className="product">
             <div>
-            {props.data.store}
+                <h1>
+                    {props.data.store}
+                    <img src="https://img.icons8.com/officel/40/000000/fire-element.png"/>
+                </h1>
             </div>
 
             {props.data.price.includes("$") && <div>
@@ -17,7 +22,7 @@ export default function Product(props) {
             </div>}
 
             <div>
-            {props.data.price}
+                <h2>{props.data.price}</h2>
             </div>
 
             {props.data.price.includes("$") &&

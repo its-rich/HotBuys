@@ -68,7 +68,12 @@ input:focus {
   background-color: transparent;
   border-color: white;
   color: white;
+  background-color: #1a73e8;
   outline: none;
+}
+
+.searchButton:disabled {
+  opacity: 0.5;
 }
 
 .productGroup {
@@ -85,6 +90,9 @@ input:focus {
   flex: 1 1 150px;
   margin: 5px;
   background-color: #5298bb;
+  height: 250px;
+  max-width: 350px;
+  border-radius: 20px;
 }
 
 /*# sourceMappingURL=styles.css.map */
