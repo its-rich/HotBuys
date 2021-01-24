@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import SearchBar from "./SearchBar.js";
 import ScrapedProducts from "./ScrapedProducts.js";
 import axios from "axios";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 
 function App() {
 
@@ -11,34 +11,9 @@ function App() {
     const [scrapedResults, setScrapedResults] = useState([]);
     const [searchQueries, setSearchQueries] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [nQueries, setNQueries] = useState([]);
-    const [cheapestStores, setCheapestStores] = useState([]);
-
-    const validStores = useSelector((state) => state.stores);
     const isChecked = useSelector((state) => state.checked);
-    const dispatch = useDispatch();
 
     const numSelectedStores = (arr) => arr.reduce((a, v) => (v ? a + 1 : a), 0);
-
-    // If the store name is not in the array then add it
-    // If the store name is in the array, then delete it
-    const updateSelectedStores = (storeName) => {
-        let newSelection = [...selectedStores];
-
-        if (selectedStores.includes(storeName)) {
-            newSelection.splice(newSelection.indexOf(storeName), 1)
-        } else {
-            newSelection.push(storeName);
-        }
-
-        setSelectedStores(newSelection);
-        dispatch(
-            {
-                type: "UPDATE",
-                store: storeName
-            }
-        );
-    };
 
     // Send the user's search query to each of the APIs that correspond to their
     // selected stores
@@ -57,8 +32,10 @@ function App() {
             }
         }
 
-        const results = [];
+        let results = [];
         let resp;
+        let currMin = -1;
+
         selectedStores.map( async (store) => {
             try {
                 resp = await axios.post(`https://australia-southeast1-hotbuys.cloudfunctions.net/check${store}`, payload, headers);
@@ -72,6 +49,8 @@ function App() {
             } finally {
                 if (resp.price === "") {
                     resp.price = "Based on your input we couldn't find a match. Please check the website yourself."
+                } else {
+                    currMin = comparePrices(currMin, resp.price);
                 }
 
                 results.push(resp);
@@ -83,8 +62,23 @@ function App() {
                 results.sort((a, b) => {
                     return (a.price.slice(1) - b.price.slice(1))
                 });
-                let temp = [results, ...scrapedResults];
-                setScrapedResults(temp);
+
+                if (currMin !== -1) {
+                    // Create a deep clone
+                    let updatedResults = JSON.parse(JSON.stringify(results));
+
+                    updatedResults.map((product) => {
+                        if (product.price === currMin) {
+                            product["isCheapest"] = true;
+                        } else {
+                            product["isCheapest"] = false;
+                        }
+                    });
+                    results = updatedResults;
+                }
+
+                let updatedProducts = [results, ...scrapedResults];
+                setScrapedResults(updatedProducts);
                 setIsLoading(false);
             }
         });
@@ -99,32 +93,36 @@ function App() {
         const currMinFloat = Math.parseFloat(currMin.replace("$", ""));
         const priceFloat = Math.parseFloat(price.replace("$", ""));
 
-        if (price < currMin) {
+        if (priceFloat < currMinFloat) {
             return price;
         }
 
         return currMin;
     };
 
+    // {validStores !== undefined && validStores.map((store, index) => {
+    //     return (
+    //         <div key={store} >
+    //             <input
+    //                 type="checkbox"
+    //                 value={store}
+    //                 checked={isChecked[index]}
+    //                 onChange={() => updateSelectedStores(store)}
+    //             />
+    //             <label>{store}</label>
+    //         </div>
+    //     )
+    // })}
+
     return (
         <div className="App">
             <h1 style={{color: "#F13C20"}}>HotBuys</h1>
             <h2 style={{fontFamily: "Bradley Hand"}}>The easy way of finding the lowest prices, at your favourite stores</h2>
-            <SearchBar queryAPI={(query) => queryAPI(query)} isSelectedStores={selectedStores} />
-
-            {validStores !== undefined && validStores.map((store, index) => {
-                return (
-                    <div key={store} >
-                        <input
-                            type="checkbox"
-                            value={store}
-                            checked={isChecked[index]}
-                            onChange={() => updateSelectedStores(store)}
-                        />
-                        <label>{store}</label>
-                    </div>
-                )
-            })}
+            <SearchBar
+                queryAPI={(query) => queryAPI(query)}
+                selectedStores={selectedStores}
+                setSelectedStores={(stores) => setSelectedStores(stores)}
+            />
 
             {isLoading &&
                 <h4>

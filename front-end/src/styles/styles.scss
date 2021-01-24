@@ -46,10 +46,11 @@ input:focus {
 }
 
 .searchBar {
-    background-color: #747474;
+    background-color: #595858;
     border-radius: 20px;
     width: 50%;
     margin: 0 auto;
+    color: #ff9e16;
 
     input {
         border-radius: 20px;
@@ -70,14 +71,20 @@ input:focus {
     font-size: 30px;
     margin-bottom: 20px;
     background-color: transparent;
-    border-color: white;
-    color: white;
-    background-color: #1a73e8;
+    border-color: black;
+    color: black;
+    background-color: white;
+    border-radius: 10px;
     outline: none;
 }
 
 .searchButton:disabled {
     opacity: 0.5;
+}
+
+.searchButton:active{
+    opacity: 0.8;
+    border-color: grey;
 }
 
 .productGroup {
@@ -92,9 +99,11 @@ input:focus {
 
 .product {
     flex: 1 1 150px;
-    margin: 5px;
+    margin-left: 30px;
+    margin-bottom: 10px;
     background-color: #5298bb;
     height: 250px;
-    max-width: 350px;
+    max-width: 400px;
     border-radius: 20px;
+    flex-basis: 80%;
 }

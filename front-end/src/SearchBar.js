@@ -1,10 +1,34 @@
 import "./styles/styles.css";
 import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 
 export default function SearchBar(props) {
 
     const [productName, setProductName] = useState("");
     const [productBrand, setProductBrand] = useState("");
+    const validStores = useSelector((state) => state.stores);
+    const isChecked = useSelector((state) => state.checked);
+    const dispatch = useDispatch();
+
+    // If the store name is not in the array then add it
+    // If the store name is in the array, then delete it
+    const updateSelectedStores = (storeName) => {
+        let newSelection = [...props.selectedStores];
+
+        if (props.selectedStores.includes(storeName)) {
+            newSelection.splice(newSelection.indexOf(storeName), 1)
+        } else {
+            newSelection.push(storeName);
+        }
+
+        props.setSelectedStores(newSelection);
+        dispatch(
+            {
+                type: "UPDATE",
+                store: storeName
+            }
+        );
+    };
 
     const initiateSearch = () => {
         if (productName === "") {
@@ -39,11 +63,28 @@ export default function SearchBar(props) {
                     />
                 </div>
 
-                {props.isSelectedStores.length === 0 &&
+                <div className="storeOptions" style={{ display:"flex"}}>
+                    {validStores !== undefined && validStores.map((store, index) => {
+                        return (
+                            <div key={store.storeName} style={{}}>
+                                {store.storeName}
+                                <input
+                                    style={{width: "50px"}}
+                                    type="checkbox"
+                                    value={store.URL}
+                                    checked={isChecked[index]}
+                                    onChange={() => updateSelectedStores(store.storeName)}
+                                />
+                            </div>
+                        )
+                    })}
+                </div>
+
+                {props.selectedStores.length === 0 &&
                     <button className="searchButton" disabled>
                     Search <i className="lni lni-search-alt"></i>
                     </button>}
-                {props.isSelectedStores.length !== 0 && <button
+                {props.selectedStores.length !== 0 && <button
                     className="searchButton"
                     onClick={() => initiateSearch()}
                 >

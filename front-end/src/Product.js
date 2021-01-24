@@ -2,8 +2,6 @@ import "./styles/styles.css";
 
 export default function Product(props) {
 
-    console.log(props.fire);
-
     const openWebsite = (link) => {
         window.open(link);
     }
@@ -13,7 +11,8 @@ export default function Product(props) {
             <div>
                 <h1>
                     {props.data.store}
-                    <img src="https://img.icons8.com/officel/40/000000/fire-element.png"/>
+                    {props.data.isCheapest !== undefined && props.data.isCheapest &&
+                        <img alt="" src="https://img.icons8.com/officel/40/000000/fire-element.png"/>}
                 </h1>
             </div>
 
