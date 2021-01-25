@@ -1,6 +1,7 @@
 import "./styles/styles.css";
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import ToggleButton from "./ToggleButton.js";
 
 export default function SearchBar(props) {
 
@@ -12,20 +13,20 @@ export default function SearchBar(props) {
 
     // If the store name is not in the array then add it
     // If the store name is in the array, then delete it
-    const updateSelectedStores = (storeName) => {
+    const updateSelectedStores = (storeData) => {
         let newSelection = [...props.selectedStores];
 
-        if (props.selectedStores.includes(storeName)) {
-            newSelection.splice(newSelection.indexOf(storeName), 1)
+        if (props.selectedStores.includes(storeData.URL)) {
+            newSelection.splice(newSelection.indexOf(storeData.storeName), 1)
         } else {
-            newSelection.push(storeName);
+            newSelection.push(storeData.URL);
         }
 
         props.setSelectedStores(newSelection);
         dispatch(
             {
                 type: "UPDATE",
-                store: storeName
+                store: storeData.storeName
             }
         );
     };
@@ -63,19 +64,15 @@ export default function SearchBar(props) {
                     />
                 </div>
 
-                <div className="storeOptions" style={{ display:"flex"}}>
+                <div>
                     {validStores !== undefined && validStores.map((store, index) => {
                         return (
-                            <div key={store.storeName} style={{}}>
-                                {store.storeName}
-                                <input
-                                    style={{width: "50px"}}
-                                    type="checkbox"
-                                    value={store.URL}
-                                    checked={isChecked[index]}
-                                    onChange={() => updateSelectedStores(store.storeName)}
-                                />
-                            </div>
+                            <ToggleButton
+                                key={store.URL}
+                                updateSelectedStores={() => updateSelectedStores(store)}
+                                store={store.storeName}
+                                active={isChecked[index]}
+                            />
                         )
                     })}
                 </div>

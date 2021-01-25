@@ -4,17 +4,17 @@ import axios from "axios";
 const checkboxReducer = (state = { stores: [], checked: [] }, action) => {
     switch (action.type) {
         case "UPDATE":
-
             let i;
             for (i = 0; i < state.stores.length; i++) {
-                if (state.stores.storeName === action.store) {
-
+                if (state.stores[i].storeName === action.store) {
+                    break;
                 }
             }
 
             let prevChecked = state.checked[i];
             let newCheckedState = [...state.checked];
             newCheckedState[i] = !prevChecked;
+
             const newState = {
                 stores: state.stores,
                 checked: newCheckedState
@@ -27,8 +27,10 @@ const checkboxReducer = (state = { stores: [], checked: [] }, action) => {
             const checkedState = new Array(allStores.length).fill(false);
             const initialState = {
                 stores: allStores,
-                checked: checkedState
+                checked: checkedState,
+                groups: action.groups
             }
+
             return initialState;
 
         // case "ALL":
@@ -45,16 +47,18 @@ const getValidStoresMiddleware = (store) => (next) => (action) => {
             axios.get("https://9pfmbtxb4f.execute-api.ap-southeast-2.amazonaws.com/default/getValidStores")
             .then((resp) => {
                 let stores = [];
-                resp.data.options.map((group) => {
+                resp.data.options.forEach((group) => {
                     stores = stores.concat(group.stores);
                 });
 
                 store.dispatch({
                     type: "INITIALISE",
-                    store: stores
+                    store: stores,
+                    groups: resp.data.options
                 })
             })
             return next(action)
+
         default:
             return next(action)
     }

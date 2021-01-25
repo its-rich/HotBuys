@@ -67,7 +67,7 @@ function App() {
                     // Create a deep clone
                     let updatedResults = JSON.parse(JSON.stringify(results));
 
-                    updatedResults.map((product) => {
+                    updatedResults.forEach((product) => {
                         if (product.price === currMin) {
                             product["isCheapest"] = true;
                         } else {
@@ -90,8 +90,8 @@ function App() {
             return price;
         }
 
-        const currMinFloat = Math.parseFloat(currMin.replace("$", ""));
-        const priceFloat = Math.parseFloat(price.replace("$", ""));
+        const currMinFloat = parseFloat(currMin.replace("$", ""));
+        const priceFloat = parseFloat(price.replace("$", ""));
 
         if (priceFloat < currMinFloat) {
             return price;
@@ -99,20 +99,6 @@ function App() {
 
         return currMin;
     };
-
-    // {validStores !== undefined && validStores.map((store, index) => {
-    //     return (
-    //         <div key={store} >
-    //             <input
-    //                 type="checkbox"
-    //                 value={store}
-    //                 checked={isChecked[index]}
-    //                 onChange={() => updateSelectedStores(store)}
-    //             />
-    //             <label>{store}</label>
-    //         </div>
-    //     )
-    // })}
 
     return (
         <div className="App">
