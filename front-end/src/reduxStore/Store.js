@@ -56,7 +56,8 @@ const getValidStoresMiddleware = (store) => (next) => (action) => {
                     store: stores,
                     groups: resp.data.options
                 })
-            })
+            });
+
             return next(action)
 
         default:

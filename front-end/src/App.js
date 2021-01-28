@@ -103,7 +103,7 @@ function App() {
     return (
         <div className="App">
             <h1 style={{color: "#F13C20"}}>HotBuys</h1>
-            <h2 style={{fontFamily: "Bradley Hand"}}>The easy way of finding the lowest prices, at your favourite stores</h2>
+            <h2 className="trademark">The easy way of finding the lowest prices, at your favourite stores</h2>
             <SearchBar
                 queryAPI={(query) => queryAPI(query)}
                 selectedStores={selectedStores}
@@ -111,9 +111,18 @@ function App() {
             />
 
             {isLoading &&
-                <h4>
-                Loading
-                </h4>
+                <h1 className="loading">
+                    <span className="loadingLetter">L</span>
+                    <span className="loadingLetter">O</span>
+                    <span className="loadingLetter">A</span>
+                    <span className="loadingLetter">D</span>
+                    <span className="loadingLetter">I</span>
+                    <span className="loadingLetter">N</span>
+                    <span className="loadingLetter">G</span>
+                    <span className="loadingLetter">.</span>
+                    <span className="loadingLetter">.</span>
+                    <span className="loadingLetter">.</span>
+                </h1>
             }
             {scrapedResults.map((product, index) => {
                 return (

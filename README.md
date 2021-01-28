@@ -6,7 +6,7 @@ This website will search for the cheapest price listed online for a product at s
 * Can see the cheapest price of a product at selected major retail stores
 
 ## How can I access it?
-
+https://main.d2xbdqzx6twygh.amplifyapp.com/
 
 ## Stack
 This was developed using ReactJS and is hosted on an AWS Amplify Cloud Server.

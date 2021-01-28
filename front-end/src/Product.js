@@ -25,10 +25,10 @@ export default function Product(props) {
             </div>
 
             {props.data.price.includes("$") &&
-                <button onClick={() => openWebsite(props.data.link)}>Link to product</button>}
+                <button className="redirectButton" onClick={() => openWebsite(props.data.link)}>Link to product</button>}
 
             {!props.data.price.includes("$") && !props.data.link !== "" &&
-                <button onClick={() => openWebsite(props.data.link)}>Link to website</button>}
+                <button className="redirectButton" onClick={() => openWebsite(props.data.link)}>Link to website</button>}
         </div>
     )
 
