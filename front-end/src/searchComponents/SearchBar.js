@@ -1,4 +1,4 @@
-import "./styles/styles.css";
+import "../styles/styles.css";
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ToggleButton from "./ToggleButton.js";
@@ -31,6 +31,8 @@ export default function SearchBar(props) {
         );
     };
 
+    // If the user has inputted a non empty product name, then pass on the product's
+    // name and brand to the parent to initiate the search of the product
     const initiateSearch = () => {
         if (productName === "") {
             return;

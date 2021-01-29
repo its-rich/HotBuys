@@ -1,6 +1,6 @@
 import "./styles/styles.css";
-import { useEffect, useState } from "react";
-import SearchBar from "./SearchBar.js";
+import { useState } from "react";
+import SearchBar from "./searchComponents/SearchBar.js";
 import ScrapedProducts from "./ScrapedProducts.js";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -13,6 +13,8 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const isChecked = useSelector((state) => state.checked);
 
+    // This will count the amount of stores that have actually been selected by
+    // the user, by counting the number of true values in the isChecked array
     const numSelectedStores = (arr) => arr.reduce((a, v) => (v ? a + 1 : a), 0);
 
     // Send the user's search query to each of the APIs that correspond to their
@@ -59,14 +61,19 @@ function App() {
             // Only when axios has fully returned the scraped results from each store
             // should the scraped results be updated
             if (results.length === numSelectedStores(isChecked)) {
+
+                // Sort the products by: no match found then lowest to highest price
                 results.sort((a, b) => {
                     return (a.price.slice(1) - b.price.slice(1))
                 });
 
                 if (currMin !== -1) {
+
                     // Create a deep clone
                     let updatedResults = JSON.parse(JSON.stringify(results));
 
+                    // Find all products with the lowest price and then approriately
+                    // set its key to be true
                     updatedResults.forEach((product) => {
                         if (product.price === currMin) {
                             product["isCheapest"] = true;
@@ -84,6 +91,7 @@ function App() {
         });
     };
 
+    // This function will return the lowest price out of 2 strings
     const comparePrices = (currMin, price) => {
 
         if (currMin === -1) {
