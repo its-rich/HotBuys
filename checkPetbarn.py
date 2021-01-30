@@ -1,7 +1,7 @@
 import json
 import requests
-import textdistance
 from bs4 import BeautifulSoup
+from polyfuzz import PolyFuzz
 
 headers = requests.utils.default_headers()
 headers.update({
@@ -9,12 +9,10 @@ headers.update({
 })
 
 def checkSimilarity(productName, productBrand, query, maxSimilarity):
-    similarity = textdistance.levenshtein.normalized_similarity(productName.lower(), query["name"])
-
-    if similarity < 0.5:
-        return False
-    elif query["brand"] != "":
-        similarity += textdistance.levenshtein.normalized_similarity(productName.lower(), query["brand"])
+    model = PolyFuzz("TF-IDF")
+    model.match([productName], [query["name"]])
+    table = model.get_matches()
+    similarity = table.iloc[0]["Similarity"]
 
     if maxSimilarity <= similarity:
         return similarity
@@ -75,7 +73,7 @@ def checkPetbarn(query):
                 price = findLowestPrice(product["price"], price)
 
                 if price is not False:
-                product = createProductJSON("Petbarn", productName, productBrand, price, link)
+                    product = createProductJSON("Petbarn", productName, productBrand, price, link)
 
             # petbarnProducts[link] = (productName, price)
 
