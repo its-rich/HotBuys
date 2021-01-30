@@ -1,4 +1,4 @@
-import "../styles/styles.css";
+import "../../styles/styles.css";
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import ToggleButton from "./ToggleButton.js";
@@ -79,6 +79,9 @@ export default function SearchBar(props) {
                     })}
                 </div>
 
+                {/*
+                    Only let the user search if they have selected at least 1 store
+                */}
                 {props.selectedStores.length === 0 &&
                     <button className="searchButton" disabled>
                     Search <i className="lni lni-search-alt"></i>

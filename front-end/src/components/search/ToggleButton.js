@@ -1,4 +1,4 @@
-import "../styles/styles.css";
+import "../../styles/styles.css";
 
 // This is a toggle button specifically for displaying which stores a user can
 // search for a product, and allows them to include or exclude a specific store

@@ -1,5 +1,7 @@
-import "./styles/styles.css";
+import "../../styles/styles.css";
 
+// This component displays a card containing all information that the webscraper
+// could find about a product
 export default function Product(props) {
 
     const openWebsite = (link) => {
@@ -16,6 +18,10 @@ export default function Product(props) {
                 </h1>
             </div>
 
+            {/*
+                If the webscraper was able to match a product then it will contain
+                $, then it will also have a product name to display
+            */}
             {props.data.price.includes("$") && <div>
                 {props.data.name}
             </div>}
@@ -27,6 +33,11 @@ export default function Product(props) {
             {props.data.price.includes("$") &&
                 <button className="redirectButton" onClick={() => openWebsite(props.data.link)}>Link to product</button>}
 
+            {/*
+                If the webscraper wasn't able to match a product then it will
+                return a URL to website with the query used, for the user to
+                check themselves
+            */}
             {!props.data.price.includes("$") && !props.data.link !== "" &&
                 <button className="redirectButton" onClick={() => openWebsite(props.data.link)}>Link to website</button>}
         </div>

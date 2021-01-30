@@ -1,7 +1,7 @@
 import "./styles/styles.css";
 import { useState } from "react";
-import SearchBar from "./searchComponents/SearchBar.js";
-import ScrapedProducts from "./ScrapedProducts.js";
+import SearchBar from "./components/search/SearchBar.js";
+import ScrapedProducts from "./components/products/ScrapedProducts.js";
 import axios from "axios";
 import { useSelector } from "react-redux";
 
@@ -46,7 +46,7 @@ function App() {
             } catch (error) {
                 resp = {
                     "store": store,
-                    "price": "An error occurred. Please check the website yourself."
+                    "price": "Based on your input we couldn't find a match. Please be more specific."
                 }
             } finally {
                 if (resp.price === "") {
