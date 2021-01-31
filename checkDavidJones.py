@@ -1,5 +1,6 @@
 import json
 import requests
+import textdistance
 from bs4 import BeautifulSoup
 from polyfuzz import PolyFuzz
 
@@ -8,14 +9,20 @@ headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 })
 
-def checkSimilarity(productName, productBrand, query, maxSimilarity):
+def checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity):
     model = PolyFuzz("TF-IDF")
     model.match([productName], [query["name"]])
     table = model.get_matches()
-    similarity = table.iloc[0]["Similarity"]
 
-    if maxSimilarity <= similarity:
-        return similarity
+    nameSimilarity = float(table.iloc[0]["Similarity"])
+
+    if query["brand"] != "":
+        brandSimilarity = textdistance.strcmp95(productBrand, query["brand"])
+    else:
+        brandSimilarity = 0
+
+    if maxNameSimilarity <= nameSimilarity and maxBrandSimilarity <= brandSimilarity:
+        return (nameSimilarity, brandSimilarity)
     else:
         return False
 
@@ -34,8 +41,8 @@ def findLowestPrice(currPrice, newPrice):
     if currPrice == "":
         return newPrice
 
-    currPriceNum = float(currPrice.replace("$", ""))
-    newPriceNum = float(newPrice.replace("$", ""))
+    currPriceNum = float(currPrice.replace("$", "").replace(",", ""))
+    newPriceNum = float(newPrice.replace("$", "").replace(",", ""))
 
     if currPriceNum < newPriceNum:
         return False
@@ -47,7 +54,8 @@ def checkDavidJones(query):
 
     URL = f"https://search.www.davidjones.com/search?w={query['name']}"
     product = createProductJSON("David Jones", "", "", "", URL)
-    maxSimilarity = 0
+    maxNameSimilarity = 0
+    maxBrandSimilarity = 0
 
     request = requests.get(URL, headers=headers)
     soup = BeautifulSoup(request.content, "lxml")
@@ -70,15 +78,16 @@ def checkDavidJones(query):
         link = tag.find("a")["href"].replace("\\", "")
         link = link.replace("\"", "").strip()
 
-        updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
-        if updateSimilarity:
-            maxSimilarity = updateSimilarity
+        newSimilarity = checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity)
+        if newSimilarity:
+            maxNameSimilarity = newSimilarity[0]
+            maxBrandSimilarity = newSimilarity[1]
             price = findLowestPrice(product["price"], price)
 
             if price is not False:
                 product = createProductJSON("David Jones", productName, productBrand, price, link)
 
-        # davidJonesProducts[link] = (productName, productBrand, price)
+    # davidJonesProducts[link] = (productName, productBrand, price)
 
     return json.dumps(product)
 
