@@ -1,8 +1,7 @@
 import json
 import requests
-import textdistance
+from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
-from polyfuzz import PolyFuzz
 
 headers = requests.utils.default_headers()
 headers.update({
@@ -10,14 +9,10 @@ headers.update({
 })
 
 def checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity):
-    model = PolyFuzz("TF-IDF")
-    model.match([productName], [query["name"]])
-    table = model.get_matches()
-
-    nameSimilarity = float(table.iloc[0]["Similarity"])
+    nameSimilarity = fuzz.token_set_ratio(productName, query["name"])
 
     if query["brand"] != "":
-        brandSimilarity = textdistance.strcmp95(productBrand, query["brand"])
+        brandSimilarity = fuzz.partial_ratio(productBrand.lower(), query["brand"].lower())
     else:
         brandSimilarity = 0
 
@@ -61,38 +56,49 @@ def checkDavidJones(query):
     soup = BeautifulSoup(request.content, "lxml")
 
     stylesLink = "https://search.www.davidjones.com/htmlapi/?"
+    headers.update({
+        "referer": URL
+    })
 
+    XMLPages = []
+    i = 0
     for styleNumber in soup.findAll("p", {"class": "style-number"}):
-        headers.update({
-            "referer": URL
-        })
+        if i == 45:
+            XMLPages.append(stylesLink)
+            stylesLink = "https://search.www.davidjones.com/htmlapi/?"
+            i = 0
+
         stylesLink += "&SKU=" + styleNumber.text.strip().split(" ")[2].strip()
+        i += 1
 
-    request = requests.get(stylesLink, headers=headers)
-    soup = BeautifulSoup(request.text, "lxml")
+    XMLPages.append(stylesLink)
 
-    for tag in soup.findAll("div", {"class": '\\"item-detail\\"'}):
-        productBrand = tag.find("div", {"class": '\\"item-brand\\"'}).text.strip()
-        productName = tag.find("a").text.strip()
-        price = tag.find("span", {"itemprop": '\\"price\\"'}).text.strip()
-        link = tag.find("a")["href"].replace("\\", "")
-        link = link.replace("\"", "").strip()
+    for page in XMLPages:
 
-        newSimilarity = checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity)
-        if newSimilarity:
-            maxNameSimilarity = newSimilarity[0]
-            maxBrandSimilarity = newSimilarity[1]
-            price = findLowestPrice(product["price"], price)
+        request = requests.get(page, headers=headers)
+        soup = BeautifulSoup(request.text, "lxml")
 
-            if price is not False:
-                product = createProductJSON("David Jones", productName, productBrand, price, link)
+        for tag in soup.findAll("div", {"class": '\\"item-detail\\"'}):
+            productBrand = tag.find("div", {"class": '\\"item-brand\\"'}).text.strip()
+            productName = tag.find("a").text.strip()
+            price = tag.find("span", {"itemprop": '\\"price\\"'}).text.strip()
+            link = tag.find("a")["href"].replace("\\", "")
+            link = link.replace("\"", "").strip()
+
+            newSimilarity = checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity)
+            if newSimilarity:
+                maxNameSimilarity = newSimilarity[0]
+                maxBrandSimilarity = newSimilarity[1]
+                price = findLowestPrice(product["price"], price)
+
+                if price is not False:
+                    product = createProductJSON("David Jones", productName, productBrand, price, link)
 
     # davidJonesProducts[link] = (productName, productBrand, price)
 
     return json.dumps(product)
 
 def initiateScrape(request):
-
     query = None
 
     # Necessary headers to allow CORS

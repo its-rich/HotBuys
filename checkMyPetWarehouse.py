@@ -1,21 +1,23 @@
 import json
 import requests
+from fuzzywuzzy import fuzz
 from bs4 import BeautifulSoup
-from polyfuzz import PolyFuzz
 
 headers = requests.utils.default_headers()
 headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36"
 })
 
-def checkSimilarity(productName, productBrand, query, maxSimilarity):
-    model = PolyFuzz("TF-IDF")
-    model.match([productName], [query["name"]])
-    table = model.get_matches()
-    similarity = table.iloc[0]["Similarity"]
+def checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity):
+    nameSimilarity = fuzz.token_set_ratio(productName, query["name"])
 
-    if maxSimilarity <= similarity:
-        return similarity
+    if query["brand"] != "":
+        brandSimilarity = fuzz.partial_ratio(productBrand.lower(), query["brand"].lower())
+    else:
+        brandSimilarity = 0
+
+    if maxNameSimilarity <= nameSimilarity and maxBrandSimilarity <= brandSimilarity:
+        return (nameSimilarity, brandSimilarity)
     else:
         return False
 
@@ -34,8 +36,8 @@ def findLowestPrice(currPrice, newPrice):
     if currPrice == "":
         return newPrice
 
-    currPriceNum = float(currPrice.replace("$", ""))
-    newPriceNum = float(newPrice.replace("$", ""))
+    currPriceNum = float(currPrice.replace("$", "").replace(",", ""))
+    newPriceNum = float(newPrice.replace("$", "").replace(",", ""))
 
     if currPriceNum < newPriceNum:
         return False
@@ -48,11 +50,13 @@ def checkMyPetWarehouse(query):
     pageNum = 1
     url = f"https://results.mypetwarehouse.com.au/api/search?cid=109928273aef45ce8f9a7b655e10f7a1&q={query['name']}&page={pageNum}&ps=32&ss=&so="
     product = createProductJSON("My Pet Warehouse", "", "", "", f"https://www.mypetwarehouse.com.au/store/search.asp?q={query['name']}&ps=24&ss=&so=")
-    maxSimilarity = 0
-    pageExists = True
 
-    while pageExists:
-        pageExists = False
+    maxNameSimilarity = 0
+    maxBrandSimilarity = 0
+    productHasUpdated = True
+
+    while productHasUpdated:
+        productHasUpdated = False
         url = f"https://results.mypetwarehouse.com.au/api/search?cid=109928273aef45ce8f9a7b655e10f7a1&q={query['name']}&page={pageNum}&ps=32&ss=&so="
         request = requests.get(url, headers=headers)
         soup = BeautifulSoup(request.content, "lxml")
@@ -60,7 +64,6 @@ def checkMyPetWarehouse(query):
         productJSON = json.loads(soup.text)
 
         for item in productJSON["p"]:
-            pageExists = True
             productName = item["name"].strip()
             productBrand = item["brand"].strip()
             link = item["url"].strip()
@@ -69,9 +72,11 @@ def checkMyPetWarehouse(query):
             if "$" not in price:
                 price = "$" + price
 
-            updateSimilarity = checkSimilarity(productName, productBrand, query, maxSimilarity)
-            if updateSimilarity:
-                maxSimilarity = updateSimilarity
+            newSimilarity = checkSimilarity(productName, productBrand, query, maxNameSimilarity, maxBrandSimilarity)
+            if newSimilarity:
+                productHasUpdated = True
+                maxNameSimilarity = newSimilarity[0]
+                maxBrandSimilarity = newSimilarity[1]
                 price = findLowestPrice(product["price"], price)
 
                 if price is not False:
@@ -85,7 +90,6 @@ def checkMyPetWarehouse(query):
 
 
 def initiateScrape(request):
-
     query = None
 
     # Necessary headers to allow CORS

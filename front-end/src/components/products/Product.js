@@ -38,7 +38,7 @@ export default function Product(props) {
                 return a URL to website with the query used, for the user to
                 check themselves
             */}
-            {!props.data.price.includes("$") && !props.data.link !== "" &&
+            {!props.data.price.includes("$") && !props.data.link !== undefined &&
                 <button className="redirectButton" onClick={() => openWebsite(props.data.link)}>Link to website</button>}
         </div>
     )
