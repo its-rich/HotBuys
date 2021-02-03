@@ -6,6 +6,8 @@ This website will search for the cheapest price listed online for a product at s
 * Can see the cheapest price of a product at selected major retail stores
 
 ## How can I access it?
+Compatible on all devices, but for the best experience, use a computer.
+
 https://main.d2xbdqzx6twygh.amplifyapp.com/
 
 ## Stack
